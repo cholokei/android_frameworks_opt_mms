@@ -437,8 +437,15 @@ public class PduPersister {
                     if (ContentType.TEXT_PLAIN.equals(type) || ContentType.APP_SMIL.equals(type)
                             || ContentType.TEXT_HTML.equals(type)) {
                         String text = c.getString(PART_COLUMN_TEXT);
-                        byte [] blob = new EncodedStringValue(text != null ? text : "")
-                            .getTextString();
+                    //    byte [] blob = new EncodedStringValue(text != null ? text : "") // by Cholokei - start
+                    //        .getTextString();
+                        byte [] blob;
+                        try {
+                            blob = (text != null ? text : "").getBytes(CharacterSets.getMimeName(charset));
+                        } catch (Exception e) {
+                            Log.w(TAG, "Failed to decode an MMS text.", e);
+                            blob = new byte[0];
+                        } // by Cholokei - end
                         baos.write(blob, 0, blob.length);
                     } else {
 
@@ -792,7 +799,8 @@ public class PduPersister {
                     || ContentType.APP_SMIL.equals(contentType)
                     || ContentType.TEXT_HTML.equals(contentType)) {
                 ContentValues cv = new ContentValues();
-                cv.put(Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString());
+                //cv.put(Telephony.Mms.Part.TEXT, new EncodedStringValue(data).getString()); // by Cholokei - start
+                cv.put(Telephony.Mms.Part.TEXT, new EncodedStringValue(part.getCharset(), data).getString()); // by Cholokei - end
                 if (mContentResolver.update(uri, cv, null, null) != 1) {
                     throw new MmsException("unable to update " + uri.toString());
                 }
